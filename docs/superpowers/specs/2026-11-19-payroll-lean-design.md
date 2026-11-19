@@ -19,6 +19,7 @@
 - 賞与（標準賞与額）
 - 定時決定・随時改定などの標準報酬月額の決定手続き
 - 源泉徴収税、年末調整
+- 子ども・子育て支援金（令和 8 年 4 月分から健康保険料と合わせて徴収される。料率 0.23%）
 
 前提とするデータ:
 
@@ -30,7 +31,7 @@
 
 演習形式で進める。型、データ、テストは用意しておき、関数の本体と証明は `sorry` として残す。学習者が `sorry` を埋めるとテストが通る。
 
-解けない演習を出さないため、模範解答を先に書いてビルドが通ることを確かめ、その後で演習側を `sorry` に置き換える。
+解けない演習を出さないため、模範解答は `Solutions/` に書き、`scripts/check-solutions.sh` で検証する。このスクリプトは一時ディレクトリで `Solutions/*.lean` を `Payroll/` に上書きし、`sorry` の警告なしで `Payroll` と `PayrollTest` がビルドできることを確かめる。演習側の `Payroll/` には常に `sorry` 入りの版だけを置く。
 
 ## 方針: 金額と料率の表現
 
@@ -61,6 +62,8 @@ lean-handson/
 │   └── Premium.lean      # 章 4
 ├── PayrollTest/          # テスト（#guard / example）
 ├── Solutions/            # 模範解答（lake のビルド対象外）
+├── scripts/
+│   └── check-solutions.sh  # 模範解答を演習に重ねてテストする
 └── docs/
     ├── 00-setup.md       # 章 0: 環境構築
     ├── 01-money.md 〜 04-premium.md
@@ -85,10 +88,11 @@ abbrev Yen := Nat
 /-- num / den 円を、50 銭以下は切り捨て、50 銭超は切り上げて円にする。den = 0 のときは 0 を返す。 -/
 def roundHalfDown (num den : Nat) : Yen
 
-/-- 丸めた結果と真の値の差は 0.5 円以内。絶対値を使わず Nat の不等式 2 本で表す。 -/
+/-- 丸めた結果と真の値の差は 0.5 円以内。絶対値を使わず Nat の不等式 2 本で表す。
+    積を den * r の形にそろえ、omega が同じ項として扱えるようにしている。 -/
 theorem roundHalfDown_close (h : 0 < den) :
-    let r := roundHalfDown num den
-    2 * num ≤ (2 * r + 1) * den ∧ 2 * r * den < 2 * num + den
+    2 * num ≤ 2 * (den * roundHalfDown num den) + den ∧
+    2 * (den * roundHalfDown num den) < 2 * num + den
 
 /-- 分母を固定すると、分子について単調。 -/
 theorem roundHalfDown_mono (h : n₁ ≤ n₂) :
@@ -125,24 +129,25 @@ structure GradeRow where
   std   : Yen   -- 標準報酬月額
   lower : Yen   -- 報酬月額の下限（この額以上がこの等級）
 
-/-- 表が昇順に並んでいること。Mathlib の List.Sorted は使わず、core の List.Pairwise で定義する。 -/
-def SortedTable (t : List GradeRow) : Prop :=
-  t.Pairwise (fun a b => a.lower < b.lower ∧ a.std < b.std)
+/-- lower ≤ pay を満たす行の std の最大値。該当行がなければ 0。
+    表が昇順なら「該当する最後の行の std」と一致する。 -/
+def lookupStd : List GradeRow → Yen → Yen
 
-/-- lower ≤ pay を満たす行のうち最後の行の std を返す。該当行がなければ 0。 -/
-def lookupStd (t : List GradeRow) (pay : Yen) : Yen
-
-theorem lookupStd_mono (hs : SortedTable t) (h : p₁ ≤ p₂) :
+/-- 任意の表について単調（昇順でなくても成り立つ）。 -/
+theorem lookupStd_mono (t : List GradeRow) (h : p₁ ≤ p₂) :
     lookupStd t p₁ ≤ lookupStd t p₂
+
+/-- 隣り合う行で lower と std が真に増えていること。 -/
+def sortedB : List GradeRow → Bool
 
 def kenpoTable : List GradeRow    -- 健康保険 50 等級
 def kouseiTable : List GradeRow   -- 厚生年金 32 等級
 
-theorem kenpoTable_sorted : SortedTable kenpoTable    -- decide で示す
-theorem kouseiTable_sorted : SortedTable kouseiTable
+theorem kenpoTable_sorted : sortedB kenpoTable = true := by decide
+theorem kouseiTable_sorted : sortedB kouseiTable = true := by decide
 ```
 
-報酬月額には上限がないので、`decide` による全数検査では単調性を示せない。ソート済みの表一般について帰納法で示す。全章で最も難しい演習になる。
+報酬月額には上限がないので、`decide` による全数検査では単調性を示せない。表一般について帰納法で示す。lookupStd を「最大値」として定義したので、単調性の証明には昇順の仮定が要らない。昇順であることは、データの検査として具体的な表に `decide` で確かめる。
 
 学ぶこと: `List`、パターンマッチ、再帰、帰納法、`decide`。
 
