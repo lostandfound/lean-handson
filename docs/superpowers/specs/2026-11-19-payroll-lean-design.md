@@ -83,7 +83,7 @@ lean-handson/
 ### 章 1: 金額と端数処理（`Payroll/Money.lean`）
 
 ```lean
-abbrev Yen := Nat
+notation "Yen" => Nat   -- abbrev だと omega が Nat と認識しない
 
 /-- num / den 円を、50 銭以下は切り捨て、50 銭超は切り上げて円にする。den = 0 のときは 0 を返す。 -/
 def roundHalfDown (num den : Nat) : Yen

@@ -144,8 +144,8 @@ if ! lake build Payroll PayrollTest > build.log 2>&1; then
   echo "check-solutions: build failed" >&2
   exit 1
 fi
-if grep -q "declaration uses 'sorry'" build.log; then
-  grep "declaration uses 'sorry'" build.log
+if grep -q "declaration uses `sorry`" build.log; then
+  grep "declaration uses `sorry`" build.log
   echo "check-solutions: sorry remains" >&2
   exit 1
 fi
@@ -239,7 +239,7 @@ EOF
 
 **Interfaces:**
 - Produces:
-  - `abbrev Payroll.Yen := Nat`
+  - `notation "Yen" => Nat`
   - `def Payroll.roundHalfDown (num den : Nat) : Yen`
   - `theorem Payroll.roundHalfDown_close {num den : Nat} (h : 0 < den) : 2 * num ≤ 2 * (den * roundHalfDown num den) + den ∧ 2 * (den * roundHalfDown num den) < 2 * num + den`
   - `theorem Payroll.roundHalfDown_mono {n₁ n₂ den : Nat} (h : n₁ ≤ n₂) : roundHalfDown n₁ den ≤ roundHalfDown n₂ den`
@@ -282,7 +282,7 @@ example : roundHalfDown 9 4 ≤ roundHalfDown 11 4 := roundHalfDown_mono (by dec
 namespace Payroll
 
 /-- 金額（円）。保険料も報酬も負にならないので Nat で表す。 -/
-abbrev Yen := Nat
+notation "Yen" => Nat   -- abbrev だと omega が Nat と認識しない
 
 /-- `num / den` 円を、50 銭以下は切り捨て、50 銭を超えたら切り上げて円にする。
     `den = 0` のときは 0 を返す。
@@ -314,7 +314,7 @@ end Payroll
 - [ ] **Step 3: 演習の状態を確かめる**
 
 Run: `lake build Payroll`
-Expected: 成功し、`declaration uses 'sorry'` の警告が 3 件出る。
+Expected: 成功し、`declaration uses `sorry`` の警告が 3 件出る。
 
 Run: `lake build PayrollTest`
 Expected: `#guard` の行でエラーになって失敗する（`sorry` に依存する式は評価できないため）。失敗しない場合は、`#guard` が `sorry` を検出しないということなので、作業を止めて報告する。
@@ -329,7 +329,7 @@ Expected: `check-solutions: build failed`（模範解答がまだないため）
 ```lean
 namespace Payroll
 
-abbrev Yen := Nat
+notation "Yen" => Nat   -- abbrev だと omega が Nat と認識しない
 
 def roundHalfDown (num den : Nat) : Yen :=
   if den = 0 then 0
