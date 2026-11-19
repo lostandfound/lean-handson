@@ -1,1 +1,1 @@
--- 各章のモジュールをここで import する
+import Payroll.Money

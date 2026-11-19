@@ -18,8 +18,8 @@ if ! lake build Payroll PayrollTest > build.log 2>&1; then
   echo "check-solutions: build failed" >&2
   exit 1
 fi
-if grep -q "declaration uses 'sorry'" build.log; then
-  grep "declaration uses 'sorry'" build.log
+if grep -q "declaration uses .sorry." build.log; then
+  grep "declaration uses .sorry." build.log
   echo "check-solutions: sorry remains" >&2
   exit 1
 fi

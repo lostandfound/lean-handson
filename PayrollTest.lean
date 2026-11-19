@@ -1,1 +1,1 @@
--- 各章のテストモジュールをここで import する
+import PayrollTest.Money
