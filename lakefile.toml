@@ -1,0 +1,8 @@
+name = "payroll"
+defaultTargets = ["Payroll"]
+
+[[lean_lib]]
+name = "Payroll"
+
+[[lean_lib]]
+name = "PayrollTest"
